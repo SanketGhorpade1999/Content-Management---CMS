@@ -2,11 +2,10 @@
 
 ![CI build](https://github.com/UniversitadellaCalabria/uniCMS/workflows/uniCMS/badge.svg)
 ![Python version](https://img.shields.io/badge/license-Apache%202-blue.svg)
-[![codecov](https://codecov.io/gh/UniversitadellaCalabria/uniCMS/branch/main/graph/badge.svg)](https://codecov.io/gh/UniversitadellaCalabria/uniCMS)
 ![License](https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9-blue.svg)
 
 uniCMS is a Web Application Content Management System developed using  **Django Framework**. 
-The project is created by a group of passionate developers who introduces bespoke 
+The project is created for passionate developers who introduces bespoke 
 design and architecture for a next generation CMS.
 
 
@@ -61,12 +60,7 @@ Features
 
 uniCMS is designed for both end users and developers where the developers can create their 
 own customzied web applications (CMS) without starting one from scratch and end users 
-without any development skills can setup a professional CMS platform without difficulty.
-
-uniCMS was created due to necessity of creation and design of a new protal for the 
-University of Calabria. After evaluation of several options, University of Calabria 
-having a strong in-house competitive and highly skilled technical team it was decided 
-to opt for the development of a brand new CMS solution based on Django framework. 
+without any development skills can setup a professional CMS platform without difficulty. 
 
 The entire uniCMS project code is open sourced and therefore licensed under 
 the [Apache 2.0](https://en.wikipedia.org/wiki/Apache_License).
