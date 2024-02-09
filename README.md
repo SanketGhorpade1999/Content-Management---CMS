@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9-blue.svg)
 
 uniCMS is a Web Application Content Management System developed using  **Django Framework**. 
-The project is created for passionate developers who introduces bespoke 
+The project is created with group of student under **Suven Consultancy and Technology PVT.LTD** for passionate developers who introduces bespoke 
 design and architecture for a next generation CMS.
 
 
