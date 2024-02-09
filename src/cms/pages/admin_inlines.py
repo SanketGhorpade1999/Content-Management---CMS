@@ -1,0 +1,114 @@
+import nested_admin
+
+from django.contrib import admin
+
+from . models import (Page,
+                      PageBlock,
+                      PageCarousel,
+                      PageContact,
+                      PageHeading,
+                      PageHeadingLocalization,
+                      PageLink,
+                      PageLocalization,
+                      PageMedia,
+                      PageMediaCollection,
+                      PageMenu,
+                      PagePublication,
+                      PageRelated)
+
+
+class PageInline(admin.TabularInline):
+    model = Page
+    extra = 0
+    classes = ['collapse']
+
+
+class PageLocalizationInline(nested_admin.NestedStackedInline):
+    model = PageLocalization
+    extra = 0
+    classes = ['collapse']
+
+
+class PageLinkInline(nested_admin.NestedTabularInline):
+    model = PageLink
+    extra = 0
+    classes = ['collapse']
+    sortable_field_name = "order"
+
+
+class PageRelatedInline(nested_admin.NestedTabularInline):
+    model = PageRelated
+    fk_name = 'page'
+    autocomplete_fields = ('related_page',)
+    extra = 0
+    classes = ['collapse']
+    sortable_field_name = "order"
+
+
+class PageBlockInline(nested_admin.NestedTabularInline):
+    model = PageBlock
+    extra = 0
+    raw_id_fields = ('block',)
+    sortable_field_name = "order"
+
+
+class PagePublicationInline(nested_admin.NestedTabularInline):
+    model = PagePublication
+    extra = 0
+    raw_id_fields = ('publication',)
+    sortable_field_name = "order"
+
+
+class PageCarouselInline(nested_admin.NestedTabularInline):
+    model = PageCarousel
+    extra = 0
+    classes = ['collapse']
+    raw_id_fields = ("carousel",)
+    sortable_field_name = "order"
+
+
+class PageContactInline(nested_admin.NestedTabularInline):
+    model = PageContact
+    extra = 0
+    classes = ['collapse']
+    raw_id_fields = ("contact",)
+    sortable_field_name = "order"
+
+
+class PageMediaInline(nested_admin.NestedTabularInline):
+    model = PageMedia
+    extra = 0
+    classes = ['collapse']
+    raw_id_fields = ("media",)
+    sortable_field_name = "order"
+
+
+class PageMediaCollectionInline(nested_admin.NestedTabularInline):
+    model = PageMediaCollection
+    extra = 0
+    classes = ['collapse']
+    raw_id_fields = ("collection",)
+    sortable_field_name = "order"
+
+
+class PageMenuInline(nested_admin.NestedTabularInline):
+    model = PageMenu
+    extra = 0
+    classes = ['collapse']
+    raw_id_fields = ("menu",)
+    sortable_field_name = "order"
+
+
+class PageHeadingLocalizationInline(nested_admin.NestedTabularInline):
+    model = PageHeadingLocalization
+    extra = 0
+    classes = ['collapse']
+    sortable_field_name = "order"
+
+
+class PageHeadingInline(nested_admin.NestedTabularInline):
+    model = PageHeading
+    extra = 0
+    classes = ['collapse']
+    sortable_field_name = "order"
+    inlines = (PageHeadingLocalizationInline,)

@@ -1,0 +1,116 @@
+from django.forms import ModelForm
+from django.urls import reverse
+
+from cms.api.settings import FORM_SOURCE_LABEL
+
+from . models import (Publication,
+                      PublicationAttachment,
+                      PublicationMediaCollection,
+                      PublicationLink,
+                      PublicationLocalization,
+                      PublicationRelated)
+
+
+class PublicationForm(ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        setattr(self.fields['preview_image'],
+                FORM_SOURCE_LABEL,
+                # only images
+                reverse('unicms_api:media-options') + '?file_type=image%2Fwebp')
+        setattr(self.fields['presentation_image'],
+                FORM_SOURCE_LABEL,
+                # only images
+                reverse('unicms_api:media-options') + '?file_type=image%2Fwebp')
+
+    class Meta:
+        model = Publication
+        fields = ['name', 'title', 'slug', 'subheading', 'content',
+                  'preview_image', 'presentation_image', 'category',
+                  'note', 'tags', 'relevance', 'is_active']
+
+
+class PublicationEditForm(PublicationForm):
+    """
+    same of PublicationForm but without 'is_active'
+    """
+
+    class Meta:
+        model = Publication
+        fields = ['name', 'title', 'slug', 'subheading', 'content',
+                  'preview_image', 'presentation_image', 'category',
+                  'note', 'tags', 'relevance']
+
+
+class PublicationAttachmentForm(ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        publication_id = kwargs.pop('publication_id', None)
+        super().__init__(*args, **kwargs)
+        if publication_id:
+            self.fields['publication'].queryset = Publication.objects.filter(pk=publication_id)
+
+    class Meta:
+        model = PublicationAttachment
+        fields = ['publication', 'name', 'file', 'description',
+                  'embedded', 'order', 'is_active']
+
+
+class PublicationMediaCollectionForm(ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        publication_id = kwargs.pop('publication_id', None)
+        super().__init__(*args, **kwargs)
+        if publication_id:
+            self.fields['publication'].queryset = Publication.objects.filter(pk=publication_id)
+        setattr(self.fields['collection'],
+                FORM_SOURCE_LABEL,
+                reverse('unicms_api:media-collection-options'))
+
+    class Meta:
+        model = PublicationMediaCollection
+        fields = ['publication', 'collection', 'order', 'is_active']
+
+
+class PublicationLinkForm(ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        publication_id = kwargs.pop('publication_id', None)
+        super().__init__(*args, **kwargs)
+        if publication_id:
+            self.fields['publication'].queryset = Publication.objects.filter(pk=publication_id)
+
+    class Meta:
+        model = PublicationLink
+        fields = ['publication', 'name', 'url', 'embedded']
+
+
+class PublicationLocalizationForm(ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        publication_id = kwargs.pop('publication_id', None)
+        super().__init__(*args, **kwargs)
+        if publication_id:
+            self.fields['publication'].queryset = Publication.objects.filter(pk=publication_id)
+
+    class Meta:
+        model = PublicationLocalization
+        fields = ['publication', 'title', 'language', 'subheading',
+                  'content', 'is_active']
+
+
+class PublicationRelatedForm(ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        publication_id = kwargs.pop('publication_id', None)
+        super().__init__(*args, **kwargs)
+        if publication_id:
+            self.fields['publication'].queryset = Publication.objects.filter(pk=publication_id)
+        setattr(self.fields['related'],
+                FORM_SOURCE_LABEL,
+                reverse('unicms_api:editorial-board-publications-options'))
+
+    class Meta:
+        model = PublicationRelated
+        fields = ['publication', 'related', 'is_active']

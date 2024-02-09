@@ -1,0 +1,223 @@
+from django.contrib.contenttypes.models import ContentType
+from django.http import Http404
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+
+from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
+from rest_framework.schemas.openapi import AutoSchema
+from rest_framework.views import APIView
+
+from cms.contexts.forms import EditorialBoardLockUserForm, PublicationContextForm
+from cms.contexts.models import WebPath, WebSite
+
+from cms.publications.models import PublicationContext
+from cms.publications.serializers import PublicationContextSerializer, PublicationContextSelectOptionsSerializer
+
+from . generics import UniCMSCachedRetrieveUpdateDestroyAPIView, UniCMSListCreateAPIView, UniCMSListSelectOptionsAPIView
+from . logs import ObjectLogEntriesList
+from .. exceptions import LoggedPermissionDenied
+from .. serializers import UniCMSFormSerializer
+
+
+class PublicationContextList(UniCMSListCreateAPIView):
+    """
+    """
+    description = ""
+    search_fields = ['publication__name', 'publication__title']
+    serializer_class = PublicationContextSerializer
+
+    def get_queryset(self):
+        """
+        """
+        site_id = self.kwargs.get('site_id')
+        webpath_id = self.kwargs.get('webpath_id')
+        if site_id and webpath_id:
+            site = get_object_or_404(WebSite, pk=site_id, is_active=True)
+            if not site.is_managed_by(self.request.user):
+                raise LoggedPermissionDenied(classname=self.__class__.__name__,
+                                             resource=site)
+            webpath = get_object_or_404(WebPath,
+                                        pk=webpath_id,
+                                        site=site)
+            return PublicationContext.objects.filter(webpath=webpath)
+        return PublicationContext.objects.none() # pragma: no cover
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            # get webpath
+            webpath = serializer.validated_data.get('webpath')
+            # check permissions on webpath
+            perms = webpath.is_publicable_by(user=request.user)
+            if not perms:
+                raise LoggedPermissionDenied(classname=self.__class__.__name__,
+                                             resource=request.method)
+            return super().post(request, *args, **kwargs)
+
+
+class AllPublicationContextList(UniCMSListCreateAPIView):
+    """
+    """
+    description = ""
+    search_fields = ['publication__name', 'publication__title']
+    serializer_class = PublicationContextSerializer
+    http_method_names = ['get', 'head']
+
+    def get_queryset(self):
+        """
+        """
+        now = timezone.localtime()
+        return PublicationContext.objects.filter(is_active=True,
+                                                 date_start__lte=now,
+                                                 date_end__gte=now,
+                                                 publication__is_active=True,
+                                                 webpath__site__is_active=True,
+                                                 webpath__is_active=True)
+
+
+class AllPublicationContextOptionListSchema(AutoSchema):
+    def get_operation_id(self, path, method):# pragma: no cover
+        return 'listAllPublicationContextSelectOptions'
+
+
+class AllPublicationContextOptionList(UniCMSListSelectOptionsAPIView):
+    """
+    """
+    description = ""
+    search_fields = ['publication__name', 'publication__title']
+    serializer_class = PublicationContextSelectOptionsSerializer
+    schema = AllPublicationContextOptionListSchema()
+
+    def get_queryset(self):
+        """
+        """
+        now = timezone.localtime()
+        return PublicationContext.objects.filter(is_active=True,
+                                                 date_start__lte=now,
+                                                 date_end__gte=now,
+                                                 publication__is_active=True,
+                                                 webpath__site__is_active=True,
+                                                 webpath__is_active=True)
+
+
+class PublicationContextView(UniCMSCachedRetrieveUpdateDestroyAPIView):
+    """
+    """
+    description = ""
+    permission_classes = [IsAdminUser]
+    serializer_class = PublicationContextSerializer
+
+    def get_object(self):
+        site_id = self.kwargs['site_id']
+        site = get_object_or_404(WebSite, pk=site_id, is_active=True)
+        if not site.is_managed_by(self.request.user):
+            raise LoggedPermissionDenied(classname=self.__class__.__name__,
+                                         resource=site)
+        webpath_id = self.kwargs['webpath_id']
+        pk = self.kwargs['pk']
+        return get_object_or_404(PublicationContext.objects.select_related('webpath'),
+                                 pk=pk,
+                                 webpath__pk=webpath_id,
+                                 webpath__site__pk=site_id)
+
+    def patch(self, request, *args, **kwargs):
+        item = self.get_object()
+        webpath = item.webpath
+        perms = webpath.is_publicable_by(user=request.user)
+        if not perms:
+            raise LoggedPermissionDenied(classname=self.__class__.__name__,
+                                         resource=request.method)
+        serializer = self.get_serializer(instance=item,
+                                         data=request.data,
+                                         partial=True)
+        if serializer.is_valid(raise_exception=True):
+            new_webpath = serializer.validated_data.get('webpath')
+            if new_webpath and new_webpath != item.webpath:
+                # check permissions and locks on webpath
+                webpath_perms = new_webpath.is_publicable_by(user=request.user)
+                if not webpath_perms:
+                    raise LoggedPermissionDenied(classname=self.__class__.__name__,
+                                                 resource=request.method)
+        return super().patch(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        item = self.get_object()
+        webpath = item.webpath
+        perms = webpath.is_publicable_by(user=request.user)
+        if not perms:
+            raise LoggedPermissionDenied(classname=self.__class__.__name__,
+                                         resource=request.method)
+        serializer = self.get_serializer(instance=item,
+                                         data=request.data,
+                                         partial=True)
+        if serializer.is_valid(raise_exception=True):
+            new_webpath = serializer.validated_data.get('webpath')
+            if new_webpath and new_webpath != item.webpath:
+                # check permissions and locks on webpath
+                webpath_perms = new_webpath.is_publicable_by(user=request.user)
+                if not webpath_perms:
+                    raise LoggedPermissionDenied(classname=self.__class__.__name__,
+                                                 resource=request.method)
+        return super().put(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        item = self.get_object()
+        webpath = item.webpath
+        perms = webpath.is_publicable_by(user=request.user)
+        if not perms:
+            raise LoggedPermissionDenied(classname=self.__class__.__name__,
+                                         resource=request.method)
+        return super().delete(request, *args, **kwargs)
+
+
+class PublicationContextFormView(APIView):
+
+    def get(self, *args, **kwargs):
+        form = PublicationContextForm(site_id=kwargs.get('site_id'),
+                                      webpath_id=kwargs.get('webpath_id'))
+        form_fields = UniCMSFormSerializer.serialize(form)
+        return Response(form_fields)
+
+
+class PublicationContextGenericFormView(APIView):
+
+    def get(self, *args, **kwargs):
+        form = PublicationContextForm(site_id=kwargs.get('site_id'))
+        form_fields = UniCMSFormSerializer.serialize(form)
+        return Response(form_fields)
+
+
+class EditorialBoardLockUserFormView(APIView):
+
+    def get(self, *args, **kwargs):
+        form = EditorialBoardLockUserForm()
+        form_fields = UniCMSFormSerializer.serialize(form)
+        return Response(form_fields)
+
+
+class PublicationContextLogsSchema(AutoSchema):
+    def get_operation_id(self, path, method):# pragma: no cover
+        return 'lisPublicationContextLogs'
+
+
+class PublicationContextLogsView(ObjectLogEntriesList):
+
+    schema = PublicationContextLogsSchema()
+
+    def get_queryset(self, **kwargs):
+        """
+        """
+        site_id = self.kwargs['site_id']
+        site = get_object_or_404(WebSite, pk=site_id, is_active=True)
+        if not site.is_managed_by(self.request.user):
+            raise LoggedPermissionDenied(classname=self.__class__.__name__,
+                                         resource=site)
+        webpath_id = self.kwargs['webpath_id']
+        object_id = self.kwargs['pk']
+        item = get_object_or_404(PublicationContext.objects.select_related('webpath'),
+                                 pk=object_id,
+                                 webpath__pk=webpath_id,
+                                 webpath__site__pk=site_id)
+        content_type_id = ContentType.objects.get_for_model(item).pk
+        return super().get_queryset(object_id, content_type_id)
